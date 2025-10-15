@@ -1,6 +1,8 @@
-import dotenv from "dotenv";
+import app from "./app";
+import { serverPort } from "./config";
+import { dbConfig } from "./dbConfig/dbConfig";
 
-dotenv.config();
+// db connection
+dbConfig();
 
-console.log("first");
-console.log(process.env.PORT);
+app.listen(serverPort, () => console.log(`http://localhost:${serverPort}`));
