@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { accessSecret, refreshSecret } from "../config";
 
 export interface IUser extends mongoose.Document {
   fullName: string;
@@ -54,6 +56,52 @@ userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// generate access token
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      id: this._id,
+      email: this.email,
+      role: this.role,
+    },
+    accessSecret || "vuGRnaC10rT9f7o9T2REzaZLmMrmgIKz",
+    { expiresIn: "3d" }
+  );
+};
+
+// generate refresh token
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      id: this._id,
+    },
+    refreshSecret,
+    { expiresIn: "90d" }
+  );
+};
+
+// verify access token
+userSchema.statics.verifyAccessToken = async function (token: string) {
+  try {
+    const decoded: any = jwt.verify(token, accessSecret);
+    return await this.findById(decoded.id);
+  } catch (err) {
+    return null;
+  }
+};
+
+// verify refresh token
+userSchema.statics.verifyRefreshToken = async function (token: string) {
+  try {
+    const decoded: any = jwt.verify(token, refreshSecret);
+    const user = await this.findById(decoded.id);
+    if (!user || user.refreshToken !== token) return null;
+    return user;
+  } catch (err) {
+    return null;
+  }
 };
 
 export const User = mongoose.model<IUser>("User", userSchema);
