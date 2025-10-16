@@ -17,6 +17,11 @@ export interface IUser extends mongoose.Document {
   generateRefreshToken(): string;
 }
 
+export interface IUserModelStatic extends mongoose.Model<IUser> {
+  verifyAccessToken(token: string): Promise<IUser | null>;
+  verifyRefreshToken(token: string): Promise<IUser | null>;
+}
+
 const userSchema = new mongoose.Schema<IUser>(
   {
     fullName: {
@@ -66,7 +71,7 @@ userSchema.methods.generateAccessToken = function () {
       email: this.email,
       role: this.role,
     },
-    accessSecret || "vuGRnaC10rT9f7o9T2REzaZLmMrmgIKz",
+    accessSecret,
     { expiresIn: "3d" }
   );
 };

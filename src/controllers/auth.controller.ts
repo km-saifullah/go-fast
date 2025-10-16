@@ -3,6 +3,16 @@ import { AppError } from "../utils/AppError";
 import { User } from "../models/user.model";
 import { isValidEmail } from "../utils/email.validator";
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    _id: string;
+    fullName: string;
+    email: string;
+    avatar: null;
+    role: string;
+  };
+}
+
 // signup user
 // POST /api/v1/auth/signup
 export const signupUser = async (
@@ -53,7 +63,6 @@ export const loginUser = async (
 ) => {
   try {
     const { email, password } = req.body;
-    console.log(email, password);
 
     if (!email || !password) {
       throw new AppError("Please provide email and password", 400);
@@ -84,6 +93,37 @@ export const loginUser = async (
         avatar: user.avatar || null,
         role: user.role,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// logour user
+// POST /api/v1/logout
+export const logoutUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      throw new AppError("Logout attempt failed without a valid user ID", 400);
+    } else {
+      const user = await User.findById(userId);
+
+      if (user) {
+        user.refreshToken = undefined;
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    return res.status(200).json({
+      status: true,
+      statusCode: 200,
+      message: "Logout successful",
     });
   } catch (error) {
     next(error);
