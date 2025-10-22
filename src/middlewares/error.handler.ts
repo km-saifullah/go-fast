@@ -6,7 +6,7 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error("Global Error Handler:", err.message);
+  console.error("Error:", err.message);
 
   let statusCode = err.statusCode || 500;
   let message = err.message || "Something went wrong";
